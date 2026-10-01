@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petualangan Angka Kiko - Matematika Bilangan Bulat</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Fredoka & Nunito -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti for victory -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        fredoka: ['Fredoka', 'sans-serif'],
+                        nunito: ['Nunito', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            yellow: '#FFD166',
+                            orange: '#FF9F1C',
+                            blue: '#4EA8DE',
+                            darkblue: '#2B2D42',
+                            green: '#06D6A0',
+                            red: '#EF476F',
+                            purple: '#9D4EDD',
+                            bg: '#FFF8E7'
+                        }
+                    },
+                    boxShadow: {
+                        'cartoon': '0px 8px 0px #2B2D42',
+                        'cartoon-sm': '0px 4px 0px #2B2D42',
+                        'cartoon-lg': '0px 12px 0px #2B2D42',
+                        'inner-cartoon': 'inset 0px 4px 0px rgba(0,0,0,0.15)'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background-color: #FFF8E7;
+            background-image: radial-gradient(#FFD166 1.5px, transparent 1.5px);
+            background-size: 24px 24px;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .btn-cartoon {
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+        }
+        .btn-cartoon:active {
+            transform: translateY(4px);
+            box-shadow: 0px 2px 0px #2B2D42 !important;
+        }
+
+        .bounce-gentle {
+            animation: bounceGentle 2s infinite ease-in-out;
+        }
+        @keyframes bounceGentle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .wiggle {
+            animation: wiggleAnim 0.5s ease-in-out;
+        }
+        @keyframes wiggleAnim {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-5deg); }
+            75% { transform: rotate(5deg); }
+        }
+
+        .pop-in {
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Pulse highlight for helper objects */
+        .chip-cancel {
+            animation: fadeOutDissolve 0.8s forwards ease-out;
+        }
+        @keyframes fadeOutDissolve {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3) rotate(15deg); opacity: 0.8; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+    </style>
+</head>
+<body class="min-h-screen text-brand-darkblue flex flex-col justify-between p-2 md:p-6 overflow-x-hidden">
+
+    <!-- Top Header Navigation -->
+    <header class="max-w-4xl w-full mx-auto bg-white border-4 border-brand-darkblue rounded-3xl p-3 md:p-4 shadow-cartoon flex justify-between items-center z-10">
+        <div class="flex items-center gap-3">
+            <button id="btn-back-home" onclick="game.showScreen('screen-menu')" class="hidden btn-cartoon bg-brand-yellow hover:bg-yellow-300 border-3 border-brand-darkblue text-brand-darkblue p-2 md:px-4 md:py-2 rounded-2xl border-2 font-bold flex items-center gap-2">
+                <i class="fa-solid fa-house text-xl"></i>
+                <span class="hidden md:inline">Menu</span>
+            </button>
+            <div class="flex items-center gap-2 bg-yellow-100 border-2 border-brand-darkblue px-3 py-1.5 rounded-2xl">
+                <i class="fa-solid fa-star text-yellow-500 text-xl md:text-2xl drop-shadow"></i>
+                <span id="star-count" class="font-extrabold text-xl md:text-2xl text-brand-darkblue">0</span>
+            </div>
+        </div>
+
+        <div class="text-center">
+            <h1 class="text-xl md:text-3xl font-black text-brand-darkblue tracking-wider flex items-center gap-2">
+                <i class="fa-solid fa-gamepad text-brand-blue"></i>
+                KIKO MATH!
+            </h1>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <button id="btn-sound" onclick="audio.toggleSound()" class="btn-cartoon bg-blue-100 border-2 border-brand-darkblue p-2.5 rounded-2xl text-brand-darkblue hover:bg-blue-200">
+                <i id="icon-sound" class="fa-solid fa-volume-high text-xl"></i>
+            </button>
+            <button id="btn-tts" onclick="game.toggleTTS()" class="btn-cartoon bg-purple-100 border-2 border-brand-darkblue p-2.5 rounded-2xl text-brand-darkblue hover:bg-purple-200" title="Suara Pengajar">
+                <i id="icon-tts" class="fa-solid fa-comment-dots text-xl text-brand-purple"></i>
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-4xl w-full mx-auto my-4 flex-grow flex flex-col justify-center">
+
+        <!-- ==================== SCREEN 1: MENU UTAMA ==================== -->
+        <section id="screen-menu" class="space-y-6 pop-in">
+            <!-- Mascot Welcome Box -->
+            <div class="bg-white border-4 border-brand-darkblue rounded-3xl p-6 shadow-cartoon flex flex-col md:flex-row items-center gap-6">
+                <div class="relative flex-shrink-0">
+                    <svg class="w-36 h-36 md:w-44 md:h-44 bounce-gentle" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Rabbit Mascot Graphic -->
+                        <ellipse cx="100" cy="125" rx="55" ry="50" fill="#FFD166" stroke="#2B2D42" stroke-width="6"/>
+                        <!-- Ears -->
+                        <ellipse cx="70" cy="45" rx="16" ry="40" fill="#FFD166" stroke="#2B2D42" stroke-width="6"/>
+                        <ellipse cx="70" cy="45" rx="8" ry="25" fill="#FF9F1C"/>
+                        <ellipse cx="130" cy="45" rx="16" ry="40" fill="#FFD166" stroke="#2B2D42" stroke-width="6"/>
+                        <ellipse cx="130" cy="45" rx="8" ry="25" fill="#FF9F1C"/>
+                        <!-- Cheeks -->
+                        <circle cx="65" cy="130" r="10" fill="#FF9F1C" opacity="0.5"/>
+                        <circle cx="135" cy="130" r="10" fill="#FF9F1C" opacity="0.5"/>
+                        <!-- Eyes -->
+                        <circle cx="75" cy="110" r="8" fill="#2B2D42"/>
+                        <circle cx="125" cy="110" r="8" fill="#2B2D42"/>
+                        <circle cx="77" cy="107" r="3" fill="white"/>
+                        <circle cx="127" cy="107" r="3" fill="white"/>
+                        <!-- Nose & Mouth -->
+                        <polygon points="100,120 94,113 106,113" fill="#EF476F" stroke="#2B2D42" stroke-width="2"/>
+                        <path d="M 94 126 Q 100 133 106 126" stroke="#2B2D42" stroke-width="4" stroke-linecap="round" fill="none"/>
+                        <!-- Shirt Badge -->
+                        <circle cx="100" cy="155" r="14" fill="#4EA8DE" stroke="#2B2D42" stroke-width="3"/>
+                        <text x="100" y="161" font-size="14" font-weight="bold" fill="white" text-anchor="middle">+</text>
+                    </svg>
+                </div>
+                <div class="text-center md:text-left space-y-2">
+                    <span class="bg-brand-orange text-white px-3 py-1 rounded-full text-sm font-bold border-2 border-brand-darkblue uppercase tracking-wider">Kelas 7 SMP / Special Edition</span>
+                    <h2 class="text-2xl md:text-4xl font-extrabold text-brand-darkblue">Halo! Aku Kiko 🐰</h2>
+                    <p class="text-lg text-gray-700 font-medium">Yuk belajar Matematika Bilangan Bulat dengan cara santai, seru, dan penuh warna!</p>
+                </div>
+            </div>
+
+            <!-- Level Selection Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Level 1 -->
+                <button onclick="game.startLevel(1)" class="btn-cartoon bg-green-300 hover:bg-green-400 border-4 border-brand-darkblue rounded-3xl p-5 shadow-cartoon text-left flex items-center justify-between group">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <span class="bg-white border-2 border-brand-darkblue px-2.5 py-0.5 rounded-xl font-black text-sm">LEVEL 1</span>
+                            <span class="text-xs font-extrabold text-green-900 bg-green-100 px-2 py-0.5 rounded-lg">Mudah</span>
+                        </div>
+                        <h3 class="text-xl font-black text-brand-darkblue">Penjumlahan (+)</h3>
+                        <p class="text-sm font-semibold text-gray-800">Menjumlahkan bilangan positif & negatif</p>
+                    </div>
+                    <div class="w-14 h-14 bg-white rounded-2xl border-3 border-brand-darkblue flex items-center justify-center text-2xl text-brand-green group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-plus-minus"></i>
+                    </div>
+                </button>
+
+                <!-- Level 2 -->
+                <button onclick="game.startLevel(2)" class="btn-cartoon bg-blue-300 hover:bg-blue-400 border-4 border-brand-darkblue rounded-3xl p-5 shadow-cartoon text-left flex items-center justify-between group">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <span class="bg-white border-2 border-brand-darkblue px-2.5 py-0.5 rounded-xl font-black text-sm">LEVEL 2</span>
+                            <span class="text-xs font-extrabold text-blue-900 bg-blue-100 px-2 py-0.5 rounded-lg">Sedang</span>
+                        </div>
+                        <h3 class="text-xl font-black text-brand-darkblue">Pengurangan (-)</h3>
+                        <p class="text-sm font-semibold text-gray-800">Pengurangan & konsep hutang-bayar</p>
+                    </div>
+                    <div class="w-14 h-14 bg-white rounded-2xl border-3 border-brand-darkblue flex items-center justify-center text-2xl text-brand-blue group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-minus"></i>
+                    </div>
+                </button>
+
+                <!-- Level 3 -->
+                <button onclick="game.startLevel(3)" class="btn-cartoon bg-purple-300 hover:bg-purple-400 border-4 border-brand-darkblue rounded-3xl p-5 shadow-cartoon text-left flex items-center justify-between group">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <span class="bg-white border-2 border-brand-darkblue px-2.5 py-0.5 rounded-xl font-black text-sm">LEVEL 3</span>
+                            <span class="text-xs font-extrabold text-purple-900 bg-purple-100 px-2 py-0.5 rounded-lg">Menantang</span>
+                        </div>
+                        <h3 class="text-xl font-black text-brand-darkblue">Perkalian & Pembagian</h3>
+                        <p class="text-sm font-semibold text-gray-800">Peraturan tanda ( + ) dan ( - )</p>
+                    </div>
+                    <div class="w-14 h-14 bg-white rounded-2xl border-3 border-brand-darkblue flex items-center justify-center text-2xl text-brand-purple group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-xmark"></i>
+                    </div>
+                </button>
+
+                <!-- Level 4 -->
+                <button onclick="game.startLevel(4)" class="btn-cartoon bg-yellow-300 hover:bg-yellow-400 border-4 border-brand-darkblue rounded-3xl p-5 shadow-cartoon text-left flex items-center justify-between group">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <span class="bg-white border-2 border-brand-darkblue px-2.5 py-0.5 rounded-xl font-black text-sm">LEVEL 4</span>
+                            <span class="text-xs font-extrabold text-yellow-900 bg-yellow-100 px-2 py-0.5 rounded-lg">Campuran</span>
+                        </div>
+                        <h3 class="text-xl font-black text-brand-darkblue">Petualangan Bebas 🏆</h3>
+                        <p class="text-sm font-semibold text-gray-800">Latihan santai semua soal campuran</p>
+                    </div>
+                    <div class="w-14 h-14 bg-white rounded-2xl border-3 border-brand-darkblue flex items-center justify-center text-2xl text-brand-orange group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-trophy"></i>
+                    </div>
+                </button>
+            </div>
+        </section>
+
+        <!-- ==================== SCREEN 2: GAMEPLAY ==================== -->
+        <section id="screen-gameplay" class="hidden space-y-4 pop-in">
+            <!-- Progress Bar & Question Tracker -->
+            <div class="bg-white border-4 border-brand-darkblue rounded-2xl p-3 shadow-cartoon flex items-center justify-between gap-4">
+                <div class="flex items-center gap-2">
+                    <span id="level-badge" class="bg-brand-purple text-white border-2 border-brand-darkblue font-black px-3 py-1 rounded-xl text-sm">LEVEL 1</span>
+                    <span id="question-number" class="font-extrabold text-gray-700 text-sm md:text-base">Soal 1 dari 5</span>
+                </div>
+                <div class="flex-grow max-w-xs bg-gray-200 h-5 rounded-full border-2 border-brand-darkblue overflow-hidden">
+                    <div id="progress-bar-inner" class="bg-brand-green h-full w-0 transition-all duration-300"></div>
+                </div>
+                <button onclick="game.speakQuestion()" class="btn-cartoon bg-yellow-200 border-2 border-brand-darkblue px-3 py-1 rounded-xl text-xs md:text-sm font-bold flex items-center gap-1 hover:bg-yellow-300">
+                    <i class="fa-solid fa-volume-high text-brand-orange"></i>
+                    <span>Baca Soal</span>
+                </button>
+            </div>
+
+            <!-- Question & Mascot Card -->
+            <div class="bg-white border-4 border-brand-darkblue rounded-3xl p-6 shadow-cartoon relative">
+                <div class="flex flex-col md:flex-row items-center gap-6">
+                    <!-- Mascot Speech -->
+                    <div class="w-24 h-24 md:w-28 md:h-28 flex-shrink-0">
+                        <svg id="mascot-game-svg" class="w-full h-full" viewBox="0 0 200 200" fill="none">
+                            <ellipse cx="100" cy="125" rx="55" ry="50" fill="#FFD166" stroke="#2B2D42" stroke-width="6"/>
+                            <ellipse cx="70" cy="45" rx="16" ry="40" fill="#FFD166" stroke="#2B2D42" stroke-width="6"/>
+                            <ellipse cx="70" cy="45" rx="8" ry="25" fill="#FF9F1C"/>
+                            <ellipse cx="130" cy="45" rx="16" ry="40" fill="#FFD166" stroke="#2B2D42" stroke-width="6"/>
+                            <ellipse cx="130" cy="45" rx="8" ry="25" fill="#FF9F1C"/>
+                            <circle cx="65" cy="130" r="10" fill="#FF9F1C" opacity="0.5"/>
+                            <circle cx="135" cy="130" r="10" fill="#FF9F1C" opacity="0.5"/>
+                            <circle cx="75" cy="110" r="8" fill="#2B2D42"/>
+                            <circle cx="125" cy="110" r="8" fill="#2B2D42"/>
+                            <polygon points="100,120 94,113 106,113" fill="#EF476F" stroke="#2B2D42" stroke-width="2"/>
+                            <path id="mascot-mouth" d="M 94 126 Q 100 133 106 126" stroke="#2B2D42" stroke-width="4" stroke-linecap="round" fill="none"/>
+                        </svg>
+                    </div>
+
+                    <!-- Question Text -->
+                    <div class="text-center md:text-left flex-grow space-y-2">
+                        <p id="question-prompt" class="text-sm font-bold text-gray-500 uppercase tracking-wide">Berapakah Hasil Dari:</p>
+                        <div id="question-text" class="text-3xl md:text-5xl font-black text-brand-darkblue tracking-wide">
+                            <!-- e.g. -3 + 5 = ? -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visual Helper Area (CRITICAL FOR ABK CONCRETE LEARNING) -->
+                <div class="mt-6 bg-amber-50 border-3 border-dashed border-amber-300 rounded-2xl p-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-black text-amber-800 flex items-center gap-1">
+                            <i class="fa-solid fa-lightbulb text-yellow-500"></i> BANTUAN VISUAL (Klik koin untuk memasangkan)
+                        </span>
+                        <div class="flex gap-2 text-xs">
+                            <button onclick="game.switchHelper('coins')" id="btn-tab-coins" class="px-3 py-1 rounded-xl font-bold border-2 border-brand-darkblue bg-brand-yellow">Koin (+/-)</button>
+                            <button onclick="game.switchHelper('numberline')" id="btn-tab-line" class="px-3 py-1 rounded-xl font-bold border-2 border-brand-darkblue bg-white">Garis Bilangan</button>
+                        </div>
+                    </div>
+
+                    <!-- Helper Mode 1: Coins (Canceling Positive / Negative) -->
+                    <div id="helper-coins-container" class="min-h-[100px] flex flex-col items-center justify-center gap-3">
+                        <div id="coins-display" class="flex flex-wrap items-center justify-center gap-2 py-2">
+                            <!-- Dynamic Coins Rendered Here -->
+                        </div>
+                        <p id="coins-instruction" class="text-xs font-bold text-gray-600 text-center">
+                            Koin Hijau (+) dan Koin Merah (-) saling menghapuskan. Sisanya adalah jawabannya!
+                        </p>
+                    </div>
+
+                    <!-- Helper Mode 2: Number Line -->
+                    <div id="helper-line-container" class="hidden min-h-[100px] flex flex-col items-center justify-center p-2">
+                        <div class="w-full overflow-x-auto py-4">
+                            <div id="number-line-svg-wrap" class="min-w-[500px] flex justify-center">
+                                <!-- SVG Number line rendered via JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Answer Buttons Grid -->
+            <div id="answers-grid" class="grid grid-cols-2 gap-4">
+                <!-- Answer Buttons dynamically inserted -->
+            </div>
+        </section>
+
+        <!-- ==================== SCREEN 3: RESULT & REWARD ==================== -->
+        <section id="screen-result" class="hidden pop-in space-y-6 text-center">
+            <div class="bg-white border-4 border-brand-darkblue rounded-3xl p-8 shadow-cartoon space-y-6">
+                <!-- Stars Graphic -->
+                <div id="stars-result-container" class="flex justify-center gap-4 text-5xl md:text-6xl text-yellow-400">
+                    <i class="fa-solid fa-star drop-shadow bounce-gentle" style="animation-delay: 0s;"></i>
+                    <i class="fa-solid fa-star drop-shadow bounce-gentle" style="animation-delay: 0.2s;"></i>
+                    <i class="fa-solid fa-star drop-shadow bounce-gentle" style="animation-delay: 0.4s;"></i>
+                </div>
+
+                <div class="space-y-2">
+                    <h2 id="result-title" class="text-3xl md:text-5xl font-black text-brand-darkblue">HEBAT SEKALIKAN! 🎉</h2>
+                    <p id="result-subtitle" class="text-lg md:text-xl font-bold text-gray-700">Kamu menyelesaikan Level ini dengan sangat baik!</p>
+                </div>
+
+                <!-- Stats Summary -->
+                <div class="bg-amber-50 border-3 border-brand-darkblue rounded-2xl p-4 max-w-sm mx-auto flex justify-around">
+                    <div>
+                        <p class="text-xs font-extrabold text-gray-500 uppercase">Benar</p>
+                        <p id="result-correct" class="text-2xl font-black text-brand-green">5/5</p>
+                    </div>
+                    <div class="border-r-2 border-amber-200"></div>
+                    <div>
+                        <p class="text-xs font-extrabold text-gray-500 uppercase">Bintang Didapat</p>
+                        <p id="result-stars-earned" class="text-2xl font-black text-brand-yellow">+15</p>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-col sm:flex-row justify-center gap-4 pt-2">
+                    <button onclick="game.showScreen('screen-menu')" class="btn-cartoon bg-brand-yellow hover:bg-yellow-300 border-4 border-brand-darkblue px-6 py-3 rounded-2xl font-black text-lg text-brand-darkblue shadow-cartoon">
+                        <i class="fa-solid fa-house mr-2"></i> Menu Utama
+                    </button>
+                    <button onclick="game.restartCurrentLevel()" class="btn-cartoon bg-brand-green hover:bg-green-400 border-4 border-brand-darkblue px-6 py-3 rounded-2xl font-black text-lg text-white shadow-cartoon">
+                        <i class="fa-solid fa-rotate-right mr-2"></i> Main Lagi
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer Encouragement -->
+    <footer class="text-center text-xs font-bold text-gray-500 py-2">
+        Game Pembelajaran Spesial ABK - Matematika SMP Kelas 7 • "Semua Anak Bisa Belajar Matematika!"
+    </footer>
+
+    <script>
+        /**
+         * Sound Effects Synthesizer using standard Web Audio API
+         * Ensures no broken audio URLs and instant responsive sounds!
+         */
+        class SoundEngine {
+            constructor() {
+                this.ctx = null;
+                this.enabled = true;
+            }
+
+            initCtx() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }
+
+            toggleSound() {
+                this.enabled = !this.enabled;
+                const icon = document.getElementById('icon-sound');
+                if (this.enabled) {
+                    icon.className = 'fa-solid fa-volume-high text-xl';
+                    this.playPop();
+                } else {
+                    icon.className = 'fa-solid fa-volume-xmark text-xl text-red-500';
+                }
+            }
+
+            playPop() {
+                if (!this.enabled) return;
+                this.initCtx();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.08);
+
+                gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.08);
+            }
+
+            playCorrect() {
+                if (!this.enabled) return;
+                this.initCtx();
+                // Play a happy major chord chime (C5 -> E5 -> G5 -> C6)
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, idx) => {
+                    setTimeout(() => {
+                        const osc = this.ctx.createOscillator();
+                        const gain = this.ctx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.value = freq;
+                        
+                        gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.3);
+
+                        osc.connect(gain);
+                        gain.connect(this.ctx.destination);
+
+                        osc.start();
+                        osc.stop(this.ctx.currentTime + 0.3);
+                    }, idx * 80);
+                });
+            }
+
+            playWrong() {
+                if (!this.enabled) return;
+                this.initCtx();
+                // Gentle non-discouraging low whistle tone
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(280, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(180, this.ctx.currentTime + 0.25);
+
+                gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.25);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.25);
+            }
+
+            playFanfare() {
+                if (!this.enabled) return;
+                this.initCtx();
+                const notes = [440, 554.37, 659.25, 880, 880, 880];
+                const durations = [0.15, 0.15, 0.15, 0.3, 0.15, 0.4];
+                let timeOffset = 0;
+
+                notes.forEach((freq, i) => {
+                    setTimeout(() => {
+                        const osc = this.ctx.createOscillator();
+                        const gain = this.ctx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.value = freq;
+
+                        gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + durations[i]);
+
+                        osc.connect(gain);
+                        gain.connect(this.ctx.destination);
+
+                        osc.start();
+                        osc.stop(this.ctx.currentTime + durations[i]);
+                    }, timeOffset * 1000);
+                    timeOffset += durations[i] + 0.05;
+                });
+            }
+        }
+
+        const audio = new SoundEngine();
+
+        class TTSEngine {
+            constructor() {
+                this.enabled = true;
+                this.synth = window.speechSynthesis || null;
+            }
+
+            toggle() {
+                this.enabled = !this.enabled;
+                const icon = document.getElementById('icon-tts');
+                if (this.enabled) {
+                    icon.className = 'fa-solid fa-comment-dots text-xl text-brand-purple';
+                    this.speak("Suara pembaca aktif");
+                } else {
+                    icon.className = 'fa-solid fa-comment-slash text-xl text-gray-400';
+                    if (this.synth) this.synth.cancel();
+                }
+            }
+
+            speak(text) {
+                if (!this.enabled || !this.synth) return;
+                this.synth.cancel(); // cancel previous
+
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'id-ID';
+                utterance.rate = 0.85; // slightly slower for better clarity for ABK
+                utterance.pitch = 1.1; // friendly warmer pitch
+
+                this.synth.speak(utterance);
+            }
+        }
+
+        const tts = new TTSEngine();
+
+        class GameApp {
+            constructor() {
+                this.stars = parseInt(localStorage.getItem('kiko_math_stars') || '0');
+                this.currentLevel = 1;
+                this.currentQuestionIndex = 0;
+                this.questions = [];
+                this.score = 0;
+                this.helperMode = 'coins'; // 'coins' or 'numberline'
+                this.selectedCoins = [];
+
+                this.updateStarUI();
+            }
+
+            updateStarUI() {
+                document.getElementById('star-count').innerText = this.stars;
+                localStorage.setItem('kiko_math_stars', this.stars.toString());
+            }
+
+            showScreen(screenId) {
+                audio.playPop();
+                document.getElementById('screen-menu').classList.add('hidden');
+                document.getElementById('screen-gameplay').classList.add('hidden');
+                document.getElementById('screen-result').classList.add('hidden');
+
+                document.getElementById(screenId).classList.remove('hidden');
+
+                const btnBack = document.getElementById('btn-back-home');
+                if (screenId === 'screen-menu') {
+                    btnBack.classList.add('hidden');
+                } else {
+                    btnBack.classList.remove('hidden');
+                }
+            }
+
+            toggleTTS() {
+                tts.toggle();
+            }
+
+            startLevel(levelNum) {
+                this.currentLevel = levelNum;
+                this.currentQuestionIndex = 0;
+                this.score = 0;
+                this.questions = this.generateQuestions(levelNum, 5);
+
+                const levelNames = {
+                    1: 'LEVEL 1: Penjumlahan',
+                    2: 'LEVEL 2: Pengurangan',
+                    3: 'LEVEL 3: Perkalian/Pembagian',
+                    4: 'LEVEL 4: Petualangan'
+                };
+                document.getElementById('level-badge').innerText = levelNames[levelNum];
+
+                this.showScreen('screen-gameplay');
+                this.loadQuestion();
+            }
+
+            restartCurrentLevel() {
+                this.startLevel(this.currentLevel);
+            }
+
+            // Generator for age-appropriate Grade 7 special education math questions
+            generateQuestions(level, count) {
+                const list = [];
+                for (let i = 0; i < count; i++) {
+                    let num1, num2, op, answer, textFormat, options;
+
+                    if (level === 1) { // Penjumlahan
+                        const type = Math.floor(Math.random() * 3);
+                        if (type === 0) { // pos + neg
+                            num1 = Math.floor(Math.random() * 6) + 2; // 2 to 7
+                            num2 = -(Math.floor(Math.random() * 5) + 1); // -1 to -5
+                            answer = num1 + num2;
+                            textFormat = `${num1} + (${num2})`;
+                        } else if (type === 1) { // neg + pos
+                            num1 = -(Math.floor(Math.random() * 6) + 1);
+                            num2 = Math.floor(Math.random() * 6) + 2;
+                            answer = num1 + num2;
+                            textFormat = `(${num1}) + ${num2}`;
+                        } else { // neg + neg
+                            num1 = -(Math.floor(Math.random() * 4) + 1);
+                            num2 = -(Math.floor(Math.random() * 4) + 1);
+                            answer = num1 + num2;
+                            textFormat = `(${num1}) + (${num2})`;
+                        }
+                        op = '+';
+                    } 
+                    else if (level === 2) { // Pengurangan
+                        const type = Math.floor(Math.random() * 3);
+                        if (type === 0) { // pos - pos (negative result)
+                            num1 = Math.floor(Math.random() * 4) + 2;
+                            num2 = num1 + Math.floor(Math.random() * 4) + 1;
+                            answer = num1 - num2;
+                            textFormat = `${num1} - ${num2}`;
+                        } else if (type === 1) { // pos - neg (double minus becomes plus)
+                            num1 = Math.floor(Math.random() * 5) + 1;
+                            num2 = -(Math.floor(Math.random() * 4) + 1);
+                            answer = num1 - num2;
+                            textFormat = `${num1} - (${num2})`;
+                        } else { // neg - pos
+                            num1 = -(Math.floor(Math.random() * 4) + 1);
+                            num2 = Math.floor(Math.random() * 4) + 1;
+                            answer = num1 - num2;
+                            textFormat = `(${num1}) - ${num2}`;
+                        }
+                        op = '-';
+                    }
+                    else if (level === 3) { // Perkalian / Pembagian
+                        const isMult = Math.random() > 0.5;
+                        if (isMult) {
+                            num1 = (Math.random() > 0.5 ? 1 : -1) * (Math.floor(Math.random() * 4) + 2);
+                            num2 = (Math.random() > 0.5 ? 1 : -1) * (Math.floor(Math.random() * 4) + 1);
+                            answer = num1 * num2;
+                            const n1Text = num1 < 0 ? `(${num1})` : `${num1}`;
+                            const n2Text = num2 < 0 ? `(${num2})` : `${num2}`;
+                            textFormat = `${n1Text} × ${n2Text}`;
+                            op = '×';
+                        } else { // Division
+                            answer = (Math.random() > 0.5 ? 1 : -1) * (Math.floor(Math.random() * 4) + 1);
+                            num2 = (Math.random() > 0.5 ? 1 : -1) * (Math.floor(Math.random() * 3) + 2);
+                            num1 = answer * num2;
+                            const n1Text = num1 < 0 ? `(${num1})` : `${num1}`;
+                            const n2Text = num2 < 0 ? `(${num2})` : `${num2}`;
+                            textFormat = `${n1Text} ÷ ${n2Text}`;
+                            op = '÷';
+                        }
+                    } 
+                    else { // Level 4 Campuran
+                        const subLvl = Math.floor(Math.random() * 3) + 1;
+                        return this.generateQuestions(subLvl, count);
+                    }
+
+                    // Options generation with smart distractors
+                    options = [answer];
+                    while (options.length < 4) {
+                        const wrong = answer + (Math.random() > 0.5 ? 1 : -1) * (Math.floor(Math.random() * 4) + 1);
+                        if (!options.includes(wrong)) {
+                            options.push(wrong);
+                        }
+                    }
+                    // Shuffle options
+                    options.sort(() => Math.random() - 0.5);
+
+                    list.push({
+                        num1, num2, op, answer, textFormat, options
+                    });
+                }
+                return list;
+            }
+
+            loadQuestion() {
+                const q = this.questions[this.currentQuestionIndex];
+                
+                // Progress UI
+                document.getElementById('question-number').innerText = `Soal ${this.currentQuestionIndex + 1} dari ${this.questions.length}`;
+                const pct = ((this.currentQuestionIndex) / this.questions.length) * 100;
+                document.getElementById('progress-bar-inner').style.width = `${pct}%`;
+
+                // Display Question Text
+                document.getElementById('question-text').innerText = `${q.textFormat} = ?`;
+
+                // Render Answers
+                const grid = document.getElementById('answers-grid');
+                grid.innerHTML = '';
+
+                const colors = [
+                    'bg-yellow-300 hover:bg-yellow-400',
+                    'bg-blue-300 hover:bg-blue-400',
+                    'bg-green-300 hover:bg-green-400',
+                    'bg-purple-300 hover:bg-purple-400'
+                ];
+
+                q.options.forEach((opt, idx) => {
+                    const btn = document.createElement('button');
+                    btn.className = `btn-cartoon ${colors[idx % colors.length]} border-4 border-brand-darkblue rounded-2xl py-4 text-2xl md:text-3xl font-black text-brand-darkblue shadow-cartoon flex items-center justify-center`;
+                    btn.innerText = opt;
+                    btn.onclick = () => this.checkAnswer(opt, btn);
+                    grid.appendChild(btn);
+                });
+
+                // Render Visual Helper
+                this.renderVisualHelper();
+
+                // Speak automatically
+                setTimeout(() => {
+                    this.speakQuestion();
+                }, 300);
+            }
+
+            speakQuestion() {
+                const q = this.questions[this.currentQuestionIndex];
+                let spokenText = q.textFormat
+                    .replace(/-/g, " minus ")
+                    .replace(/\+/g, " ditambah ")
+                    .replace(/×/g, " dikali ")
+                    .replace(/÷/g, " dibagi ");
+                tts.speak(`Berapakah hasil dari ${spokenText} ?`);
+            }
+
+            switchHelper(mode) {
+                audio.playPop();
+                this.helperMode = mode;
+                const btnCoins = document.getElementById('btn-tab-coins');
+                const btnLine = document.getElementById('btn-tab-line');
+
+                if (mode === 'coins') {
+                    btnCoins.className = "px-3 py-1 rounded-xl font-bold border-2 border-brand-darkblue bg-brand-yellow";
+                    btnLine.className = "px-3 py-1 rounded-xl font-bold border-2 border-brand-darkblue bg-white";
+                    document.getElementById('helper-coins-container').classList.remove('hidden');
+                    document.getElementById('helper-line-container').classList.add('hidden');
+                } else {
+                    btnLine.className = "px-3 py-1 rounded-xl font-bold border-2 border-brand-darkblue bg-brand-yellow";
+                    btnCoins.className = "px-3 py-1 rounded-xl font-bold border-2 border-brand-darkblue bg-white";
+                    document.getElementById('helper-line-container').classList.remove('hidden');
+                    document.getElementById('helper-coins-container').classList.add('hidden');
+                }
+            }
+
+            renderVisualHelper() {
+                const q = this.questions[this.currentQuestionIndex];
+                
+                // 1. Render Coins Helper
+                const coinsContainer = document.getElementById('coins-display');
+                coinsContainer.innerHTML = '';
+
+                // Generate representation based on operation
+                let posCount = 0;
+                let negCount = 0;
+
+                if (q.op === '+') {
+                    if (q.num1 > 0) posCount += q.num1; else negCount += Math.abs(q.num1);
+                    if (q.num2 > 0) posCount += q.num2; else negCount += Math.abs(q.num2);
+                } else if (q.op === '-') {
+                    // For subtraction: e.g. 3 - (-2) => 3 + 2
+                    // 3 - 5 => 3 pos & 5 neg
+                    if (q.num1 > 0) posCount += q.num1; else negCount += Math.abs(q.num1);
+                    if (q.num2 < 0) { 
+                        // subtracting negative is adding positive
+                        posCount += Math.abs(q.num2); 
+                    } else {
+                        negCount += q.num2;
+                    }
+                } else {
+                    // Multiplication / Division simple visual representation
+                    const absAns = Math.min(Math.abs(q.answer), 12);
+                    if (q.answer >= 0) posCount = absAns; else negCount = absAns;
+                }
+
+                // Limit max rendering for UI sanity
+                posCount = Math.min(posCount, 10);
+                negCount = Math.min(negCount, 10);
+
+                // Render Positive Coins (Green)
+                for (let i = 0; i < posCount; i++) {
+                    const coin = document.createElement('div');
+                    coin.className = 'w-9 h-9 rounded-full bg-brand-green border-2 border-brand-darkblue text-white font-black text-sm flex items-center justify-center shadow-sm cursor-pointer hover:scale-110 transition-transform';
+                    coin.innerText = '+1';
+                    coinsContainer.appendChild(coin);
+                }
+
+                if (posCount > 0 && negCount > 0) {
+                    const divider = document.createElement('div');
+                    divider.className = 'text-xs font-black text-gray-400 mx-1';
+                    divider.innerText = 'VS';
+                    coinsContainer.appendChild(divider);
+                }
+
+                // Render Negative Coins (Red)
+                for (let i = 0; i < negCount; i++) {
+                    const coin = document.createElement('div');
+                    coin.className = 'w-9 h-9 rounded-full bg-brand-red border-2 border-brand-darkblue text-white font-black text-sm flex items-center justify-center shadow-sm cursor-pointer hover:scale-110 transition-transform';
+                    coin.innerText = '-1';
+                    coinsContainer.appendChild(coin);
+                }
+
+                // 2. Render SVG Number Line Helper
+                this.renderNumberLineSVG(q);
+            }
+
+            renderNumberLineSVG(q) {
+                const wrap = document.getElementById('number-line-svg-wrap');
+                const minVal = -10;
+                const maxVal = 10;
+                const width = 500;
+                const height = 80;
+                const step = width / (maxVal - minVal);
+
+                const getX = (val) => (val - minVal) * step;
+
+                let ticksSVG = '';
+                for (let i = minVal; i <= maxVal; i++) {
+                    const x = getX(i);
+                    const isZero = i === 0;
+                    ticksSVG += `
+                        <line x1="${x}" y1="40" x2="${x}" y2="${isZero ? '55' : '48'}" stroke="${isZero ? '#EF476F' : '#2B2D42'}" stroke-width="${isZero ? '3' : '2'}"/>
+                        <text x="${x}" y="68" font-size="12" font-weight="bold" fill="${isZero ? '#EF476F' : '#2B2D42'}" text-anchor="middle">${i}</text>
+                    `;
+                }
+
+                // Draw Jump Arc if addition/subtraction
+                let arcSVG = '';
+                if (q.op === '+' || q.op === '-') {
+                    const startX = getX(0);
+                    const num1X = getX(Math.max(-10, Math.min(10, q.num1 || 0)));
+                    const endX = getX(Math.max(-10, Math.min(10, q.answer || 0)));
+
+                    arcSVG = `
+                        <!-- Jump 1 -->
+                        <path d="M ${startX} 40 Q ${(startX + num1X)/2} 10 ${num1X} 40" stroke="#4EA8DE" stroke-width="3" fill="none" stroke-dasharray="4"/>
+                        <!-- Jump 2 -->
+                        <path d="M ${num1X} 40 Q ${(num1X + endX)/2} -10 ${endX} 40" stroke="#06D6A0" stroke-width="3.5" fill="none"/>
+                        <!-- Target Frog/Pointer -->
+                        <circle cx="${endX}" cy="40" r="6" fill="#FFD166" stroke="#2B2D42" stroke-width="2"/>
+                    `;
+                }
+
+                wrap.innerHTML = `
+                    <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+                        <!-- Main Line -->
+                        <line x1="10" y1="40" x2="${width - 10}" y2="40" stroke="#2B2D42" stroke-width="4" stroke-linecap="round"/>
+                        ${ticksSVG}
+                        ${arcSVG}
+                    </svg>
+                `;
+            }
+
+            checkAnswer(userAns, btnElement) {
+                const q = this.questions[this.currentQuestionIndex];
+                const isCorrect = userAns === q.answer;
+
+                if (isCorrect) {
+                    audio.playCorrect();
+                    btnElement.classList.remove('bg-yellow-300', 'bg-blue-300', 'bg-green-300', 'bg-purple-300');
+                    btnElement.classList.add('bg-brand-green', 'text-white', 'scale-105');
+
+                    // Set happy mascot expression
+                    document.getElementById('mascot-mouth').setAttribute('d', 'M 90 125 Q 100 140 110 125');
+
+                    this.score++;
+                    tts.speak("Luar biasa! Jawaban kamu benar!");
+
+                    // Small celebration confetti
+                    confetti({
+                        particleCount: 25,
+                        spread: 50,
+                        origin: { y: 0.7 }
+                    });
+
+                } else {
+                    audio.playWrong();
+                    btnElement.classList.add('bg-brand-red', 'text-white', 'wiggle');
+
+                    // Set sad/thinking mascot expression
+                    document.getElementById('mascot-mouth').setAttribute('d', 'M 94 130 Q 100 122 106 130');
+
+                    tts.speak(`Hampir benar! Jawaban yang tepat adalah ${q.answer}`);
+                }
+
+                // Disable all answer buttons temporarily
+                const buttons = document.querySelectorAll('#answers-grid button');
+                buttons.forEach(b => b.disabled = true);
+
+                // Move to next question after delay
+                setTimeout(() => {
+                    // Reset mascot mouth
+                    document.getElementById('mascot-mouth').setAttribute('d', 'M 94 126 Q 100 133 106 126');
+
+                    this.currentQuestionIndex++;
+                    if (this.currentQuestionIndex < this.questions.length) {
+                        this.loadQuestion();
+                    } else {
+                        this.showResultScreen();
+                    }
+                }, 1800);
+            }
+
+            showResultScreen() {
+                this.showScreen('screen-result');
+                audio.playFanfare();
+
+                const total = this.questions.length;
+                const ratio = this.score / total;
+
+                // Award stars based on score
+                let starsEarned = this.score * 3;
+                this.stars += starsEarned;
+                this.updateStarUI();
+
+                document.getElementById('result-correct').innerText = `${this.score}/${total}`;
+                document.getElementById('result-stars-earned').innerText = `+${starsEarned}`;
+
+                const title = document.getElementById('result-title');
+                const subtitle = document.getElementById('result-subtitle');
+
+                if (ratio === 1) {
+                    title.innerText = "SEMPURNA! 🌟";
+                    subtitle.innerText = "Kamu benar-benar jago Matematika Bilangan Bulat!";
+                    tts.speak("Sempurna! Kamu luar biasa sekali hari ini!");
+                } else if (ratio >= 0.6) {
+                    title.innerText = "HEBAT SEKALIKAN! 🎉";
+                    subtitle.innerText = "Kerja bagus! Teruskan semangat belajarmu ya!";
+                    tts.speak("Hebat sekali! Hasil yang sangat bagus!");
+                } else {
+                    title.innerText = "BAGUS! TETAP SEMANGAT! 💪";
+                    subtitle.innerText = "Yuk coba lagi, makin sering latihan makin pinter!";
+                    tts.speak("Bagus! Jangan menyerah, yuk kita latihan lagi!");
+                }
+
+                // Big Victory Confetti
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+            }
+        }
+
+        // Initialize Game App on window load
+        let game;
+        window.onload = () => {
+            game = new GameApp();
+        };
+    </script>
+</body>
+</html>
